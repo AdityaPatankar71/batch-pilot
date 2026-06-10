@@ -166,16 +166,6 @@ stop. Demo logins are in `SampleSecurityConfig`.
 | Restart / launch / stop | ✅ | ✅ | ❌ read-only | ⚠️ minimal | ✅ |
 | Built for batch operators | ✅ | ❌ data pipelines | ⚠️ viewer | ❌ | ✅ |
 
-## Build plan
-
-**M0 — Skeleton (weekend 1).** Multi-module Maven build; auto-configuration; read-only REST: list jobs, list executions, execution detail. Angular shell with jobs table. *Publish repo publicly at end of M0.*
-
-**M1 — Operations (weekend 2).** Restart, stop, launch with parameter builder. Step drill-down with stack traces. Role-based security + action audit. Error-state UX (restart of non-restartable execution, etc.).
-
-**M2 — Polish & release (weekend 3).** Empty states, loading states, dark mode (free with Material). Sample app with intentionally failing jobs for the demo GIF. README screenshots + GIF. Publish `0.1.0` to Maven Central. Seed 5 good-first-issues.
-
-**M3 — Launch (week 4).** Article: *"Spring Batch Admin died in 2019. I built the missing console."* → dev.to, r/java, Show HN. Answer the standing Stack Overflow questions about Spring Batch Admin alternatives with honest, linked answers.
-
 ## Risks & mitigations
 
 - *Spring Batch 5 API surface changes* → pin to Boot 3.x line; integration tests against two Boot minor versions.
