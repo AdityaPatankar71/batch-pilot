@@ -12,7 +12,7 @@ steps that require your credentials.
 | `batch-pilot-parent`    | ✅ (pom)   | BOM / parent metadata.                           |
 | `batch-pilot-ui`        | ✅         | Angular console packaged as classpath resources. |
 | `batch-pilot-starter`   | ✅         | The dependency consumers actually add.           |
-| `batch-pilot-sample-app`| ❌         | Demo only — `maven.deploy.skip=true`.            |
+| `batch-pilot-sample-app`| ❌         | Demo only — excluded from the deploy reactor (see below). |
 
 The starter depends on `batch-pilot-ui`, so the UI artifact **must** ship too,
 otherwise consumers can't resolve the starter.
@@ -78,8 +78,13 @@ command: `-Dgpg.passphrase=...` (or use a gpg-agent).
 2. **Build + sign + upload to the Portal staging area:**
 
    ```bash
-   mvn -Prelease clean deploy
+   mvn -Prelease clean deploy -pl '!batch-pilot-sample-app'
    ```
+
+   The `-pl '!batch-pilot-sample-app'` is **required**: the central-publishing
+   plugin bundles every module in the reactor, so the demo app must be excluded
+   from the build, not just from deploy. Without it, `batch-pilot-sample-app`
+   gets published to Central permanently.
 
    `autoPublish` is `false`, so this uploads a *deployment* you can inspect at
    `central.sonatype.com` → *Deployments* before it goes live.
