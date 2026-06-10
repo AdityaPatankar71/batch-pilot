@@ -12,8 +12,10 @@ import java.io.IOException;
 /**
  * Serves the compiled Angular console at {@code /batch-pilot}.
  *
- * <p>Static assets are read from the classpath ({@code static/batch-pilot/},
- * supplied by the {@code batch-pilot-ui} jar). Unknown non-asset paths fall back
+ * <p>Static assets are read from the classpath ({@code batch-pilot-ui/}, supplied
+ * by the {@code batch-pilot-ui} jar — deliberately outside Spring Boot's default
+ * static locations so nothing is exposed unless this handler is active). Unknown
+ * non-asset paths fall back
  * to {@code index.html} so Angular client-side routing works on deep links and
  * refreshes. The REST API under {@code /batch-pilot/api/**} is mapped by
  * {@link BatchPilotController} and takes precedence over this resource handler.
@@ -21,7 +23,7 @@ import java.io.IOException;
 @Configuration(proxyBeanMethods = false)
 public class BatchPilotWebConfig implements WebMvcConfigurer {
 
-    private static final String UI_LOCATION = "classpath:/static/batch-pilot/";
+    private static final String UI_LOCATION = "classpath:/batch-pilot-ui/";
 
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {

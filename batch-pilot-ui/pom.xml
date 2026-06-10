@@ -65,7 +65,9 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
                 <executions>
-                    <!-- Place the Angular browser bundle on the classpath at static/batch-pilot. -->
+                    <!-- Classpath location batch-pilot-ui/ is deliberately NOT one of Spring Boot's
+                         default static locations (static/, public/, ...), so the UI is only ever
+                         served by batch-pilot's own resource handler when the console is enabled. -->
                     <execution>
                         <id>copy-angular-dist</id>
                         <goals>
@@ -73,7 +75,7 @@
                         </goals>
                         <phase>process-resources</phase>
                         <configuration>
-                            <outputDirectory>${project.build.outputDirectory}/static/batch-pilot</outputDirectory>
+                            <outputDirectory>${project.build.outputDirectory}/batch-pilot-ui</outputDirectory>
                             <resources>
                                 <resource>
                                     <directory>${project.basedir}/dist/batch-pilot-ui/browser</directory>
