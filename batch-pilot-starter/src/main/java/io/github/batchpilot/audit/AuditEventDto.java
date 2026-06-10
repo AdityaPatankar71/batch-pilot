@@ -1,0 +1,29 @@
+/*
+ * Copyright 2026 Aditya Patankar
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.github.batchpilot.audit;
+
+/**
+ * One row of the action audit log: who did what, to which target, when, and the outcome.
+ */
+public record AuditEventDto(
+        String id,
+        String eventTime,
+        String principal,
+        String action,
+        String target,
+        String result,
+        String message) {
+}
