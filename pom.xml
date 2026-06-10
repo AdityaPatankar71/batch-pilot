@@ -18,6 +18,31 @@
 
     <name>batch-pilot</name>
     <description>The missing operations console for Spring Batch.</description>
+    <url>https://github.com/AdityaPatankar71/batch-pilot</url>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>AdityaPatankar71</id>
+            <name>Aditya Patankar</name>
+            <email>adityapatankar45@gmail.com</email>
+            <url>https://github.com/AdityaPatankar71</url>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:https://github.com/AdityaPatankar71/batch-pilot.git</connection>
+        <developerConnection>scm:git:git@github.com:AdityaPatankar71/batch-pilot.git</developerConnection>
+        <url>https://github.com/AdityaPatankar71/batch-pilot</url>
+        <tag>HEAD</tag>
+    </scm>
 
     <properties>
         <java.version>17</java.version>
@@ -25,6 +50,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <frontend-maven-plugin.version>1.15.1</frontend-maven-plugin.version>
         <node.version>v22.11.0</node.version>
+        <central-publishing-maven-plugin.version>0.7.0</central-publishing-maven-plugin.version>
     </properties>
 
     <modules>
@@ -47,4 +73,78 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <profiles>
+        <!--
+            Maven Central release. Activate with `-Prelease`. Attaches source and
+            javadoc jars, GPG-signs every artifact, and publishes via the Central
+            Portal. Requires a `central` server (Portal token) in settings.xml and
+            a GPG key on the build machine. See RELEASING.md.
+
+            Plugin versions for source/javadoc/gpg are inherited from
+            spring-boot-starter-parent; only the Central publisher is pinned here.
+        -->
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <configuration>
+                            <!-- batch-pilot-ui carries no Java sources; emit an empty
+                                 javadoc jar rather than failing the reactor. -->
+                            <failOnError>false</failOnError>
+                            <quiet>true</quiet>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>${central-publishing-maven-plugin.version}</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                            <!-- Leave the deployment in the Portal staging area for a
+                                 manual sanity check; flip to true to auto-release. -->
+                            <autoPublish>false</autoPublish>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

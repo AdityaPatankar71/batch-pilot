@@ -1,0 +1,34 @@
+name: Bug report
+description: Something in the console or starter behaves incorrectly.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Enable batch-pilot with ...
+        2. Open /batch-pilot and ...
+        3. See error
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: batch-pilot, Spring Boot, and Java versions.
+      placeholder: "batch-pilot 0.1.0, Spring Boot 3.4.x, Java 17"
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs / stack trace
+      render: text

@@ -40,7 +40,10 @@ import { LaunchDialogComponent } from '../shared/launch-dialog.component';
         <mat-icon color="warn">error_outline</mat-icon> Failed to load executions: {{ error }}
       </mat-card-content></mat-card>
     } @else if (executions.length === 0) {
-      <mat-card><mat-card-content class="bp-muted">No executions for this job yet.</mat-card-content></mat-card>
+      <div class="bp-empty">
+        <mat-icon>history</mat-icon>
+        <div>No executions for this job yet.</div>
+      </div>
     } @else {
       <table mat-table [dataSource]="executions" class="mat-elevation-z1">
         <ng-container matColumnDef="id">

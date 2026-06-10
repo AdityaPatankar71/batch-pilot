@@ -21,7 +21,10 @@ import { AuditEvent } from '../models';
         <mat-icon color="warn">error_outline</mat-icon> Failed to load audit log: {{ error }}
       </mat-card-content></mat-card>
     } @else if (events.length === 0) {
-      <mat-card><mat-card-content class="bp-muted">No actions recorded yet.</mat-card-content></mat-card>
+      <div class="bp-empty">
+        <mat-icon>fact_check</mat-icon>
+        <div>No actions recorded yet.</div>
+      </div>
     } @else {
       <table mat-table [dataSource]="events" class="mat-elevation-z1">
         <ng-container matColumnDef="time">

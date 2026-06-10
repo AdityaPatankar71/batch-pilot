@@ -15,6 +15,12 @@
     <name>batch-pilot-sample-app</name>
     <description>Demo Spring Boot app with three batch jobs, wired to the batch-pilot console.</description>
 
+    <properties>
+        <!-- Demo module: never published to Maven Central. Honored by both
+             maven-deploy-plugin and central-publishing-maven-plugin. -->
+        <maven.deploy.skip>true</maven.deploy.skip>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>io.github.adityapatankar71</groupId>

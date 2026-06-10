@@ -23,7 +23,10 @@ import { DurationPipe } from '../duration.pipe';
         <mat-icon color="warn">error_outline</mat-icon> Failed to load jobs: {{ error }}
       </mat-card-content></mat-card>
     } @else if (jobs.length === 0) {
-      <mat-card><mat-card-content class="bp-muted">No registered jobs found.</mat-card-content></mat-card>
+      <div class="bp-empty">
+        <mat-icon>inbox</mat-icon>
+        <div>No registered jobs found.</div>
+      </div>
     } @else {
       <table mat-table [dataSource]="jobs" class="mat-elevation-z1">
         <ng-container matColumnDef="name">
