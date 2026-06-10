@@ -51,6 +51,7 @@
         <frontend-maven-plugin.version>1.15.1</frontend-maven-plugin.version>
         <node.version>v22.11.0</node.version>
         <central-publishing-maven-plugin.version>0.7.0</central-publishing-maven-plugin.version>
+        <license-maven-plugin.version>4.6</license-maven-plugin.version>
     </properties>
 
     <modules>
@@ -73,6 +74,47 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <build>
+        <plugins>
+            <!--
+                Apache-2.0 license header enforcement. `mvn license:format` stamps
+                headers from etc/header.txt; the `check` goal is bound to `verify`
+                so a build fails if any Java file is missing or has a stale header.
+            -->
+            <plugin>
+                <groupId>com.mycila</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <version>${license-maven-plugin.version}</version>
+                <configuration>
+                    <licenseSets>
+                        <licenseSet>
+                            <header>${maven.multiModuleProjectDirectory}/etc/header.txt</header>
+                            <includes>
+                                <include>**/*.java</include>
+                            </includes>
+                        </licenseSet>
+                    </licenseSets>
+                    <properties>
+                        <owner>Aditya Patankar</owner>
+                        <year>2026</year>
+                    </properties>
+                    <mapping>
+                        <java>SLASHSTAR_STYLE</java>
+                    </mapping>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>check-license-headers</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
     <profiles>
         <!--
