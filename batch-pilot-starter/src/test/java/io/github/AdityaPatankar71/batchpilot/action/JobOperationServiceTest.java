@@ -106,6 +106,20 @@ class JobOperationServiceTest {
     }
 
     @Test
+    void launch_unconvertibleParameterValue_mapsToBadRequest() throws Exception {
+        when(jobOperator.start(eq("dailyJob"), any(Properties.class)))
+                .thenThrow(new org.springframework.batch.core.converter.JobParametersConversionException(
+                        "Unable to convert job parameter abc to type class java.lang.Long"));
+        LaunchRequest request = new LaunchRequest(List.of(
+                new LaunchParam("n", "abc", ParamType.LONG, true)));
+
+        assertThatThrownBy(() -> service.launch("dailyJob", request, "carol"))
+                .isInstanceOfSatisfying(ActionException.class,
+                        ex -> assertThat(ex.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST));
+        verify(audit).record(eq("carol"), eq(AuditAction.LAUNCH), eq("job:dailyJob"), eq(false), anyString());
+    }
+
+    @Test
     void launch_disabled_throws() {
         properties.getActions().setLaunch(false);
 

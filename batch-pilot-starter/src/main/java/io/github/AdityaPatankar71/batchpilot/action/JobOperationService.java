@@ -9,6 +9,7 @@ import io.github.AdityaPatankar71.batchpilot.audit.AuditAction;
 import io.github.AdityaPatankar71.batchpilot.audit.AuditService;
 import io.github.AdityaPatankar71.batchpilot.config.BatchPilotProperties;
 import org.springframework.batch.core.JobParametersInvalidException;
+import org.springframework.batch.core.converter.JobParametersConversionException;
 import org.springframework.batch.core.launch.JobExecutionNotRunningException;
 import org.springframework.batch.core.launch.JobInstanceAlreadyExistsException;
 import org.springframework.batch.core.launch.JobOperator;
@@ -141,6 +142,9 @@ public class JobOperationService {
             return new ActionException(HttpStatus.NOT_FOUND, "No such job");
         }
         if (ex instanceof JobParametersInvalidException) {
+            return new ActionException(HttpStatus.BAD_REQUEST, "Invalid job parameters: " + ex.getMessage());
+        }
+        if (ex instanceof JobParametersConversionException) {
             return new ActionException(HttpStatus.BAD_REQUEST, "Invalid job parameters: " + ex.getMessage());
         }
         if (ex instanceof JobRestartException) {
