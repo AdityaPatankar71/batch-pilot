@@ -1,1 +1,2 @@
 io.github.AdityaPatankar71.batchpilot.config.BatchPilotAutoConfiguration
+io.github.AdityaPatankar71.batchpilot.config.BatchPilotSecurityAutoConfiguration
