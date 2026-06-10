@@ -16,8 +16,10 @@
     <description>Demo Spring Boot app with three batch jobs, wired to the batch-pilot console.</description>
 
     <properties>
-        <!-- Demo module: never published to Maven Central. Honored by both
-             maven-deploy-plugin and central-publishing-maven-plugin. -->
+        <!-- Demo module: never published to Maven Central. maven.deploy.skip
+             stops the classic maven-deploy-plugin; the central-publishing
+             plugin needs its own skipPublishing flag (set in the release
+             profile below) to be excluded from the Central bundle. -->
         <maven.deploy.skip>true</maven.deploy.skip>
     </properties>
 
@@ -61,4 +63,26 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!-- Keep this demo module out of the Maven Central bundle. The parent's
+             release profile injects central-publishing into every module via
+             extensions=true; override it here so sample-app is never uploaded. -->
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>${central-publishing-maven-plugin.version}</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <skipPublishing>true</skipPublishing>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
