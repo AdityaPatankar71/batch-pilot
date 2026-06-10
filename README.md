@@ -2,7 +2,10 @@
 
 > **The missing operations console for Spring Batch.** See every job, drill into every failure, restart with one click — without adopting a heavyweight platform.
 
-`Status: 0.1.0 (release prep)` · `License: Apache-2.0` · `Java 17+ · Spring Boot 3.x · Angular 18`
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.batchpilot/batch-pilot-starter.svg?label=Maven%20Central)](https://central.sonatype.com/artifact/io.github.batchpilot/batch-pilot-starter)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+
+`Status: 0.1.0 — on Maven Central` · `Java 17+ · Spring Boot 3.x · Angular 18`
 
 ---
 
