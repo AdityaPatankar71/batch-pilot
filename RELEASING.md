@@ -67,11 +67,12 @@ command: `-Dgpg.passphrase=...` (or use a gpg-agent).
 
 ## Cutting a release
 
-1. **Drop the SNAPSHOT.** The repo carries `0.1.0-SNAPSHOT`; set the release
-   version across all modules:
+1. **Version is already set.** `main` carries `0.1.0` and is tagged `v0.1.0`
+   (commit `release: 0.1.0`) — go straight to the deploy below. To cut a *later*
+   release, bump first:
 
    ```bash
-   mvn versions:set -DnewVersion=0.1.0 -DgenerateBackupPoms=false
+   mvn versions:set -DnewVersion=X.Y.Z -DgenerateBackupPoms=false
    ```
 
 2. **Build + sign + upload to the Portal staging area:**
@@ -87,14 +88,12 @@ command: `-Dgpg.passphrase=...` (or use a gpg-agent).
    present), then click **Publish** in the Portal — or set `autoPublish` to `true`
    in the profile to skip the manual gate on future releases.
 
-4. **Tag and bump to the next snapshot:**
+4. **After a successful publish, open the next dev cycle:**
 
    ```bash
-   git commit -am "release: 0.1.0"
-   git tag v0.1.0
    mvn versions:set -DnewVersion=0.2.0-SNAPSHOT -DgenerateBackupPoms=false
    git commit -am "chore: start 0.2.0-SNAPSHOT"
-   git push --follow-tags
+   git push
    ```
 
 Central sync to `repo1.maven.org` typically lands within ~15–30 minutes of publish.

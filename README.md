@@ -81,7 +81,7 @@ batch-pilot.security.role=BATCH_PILOT_ADMIN
 Open `http://localhost:8080/batch-pilot`. Done.
 
 > **Until `0.1.0` is on Maven Central**, build from source first (next section);
-> the snapshot then resolves from your local `~/.m2`.
+> it then resolves from your local `~/.m2`.
 
 ## Build from source
 
@@ -91,13 +91,13 @@ cd batch-pilot
 mvn clean install        # builds the Angular UI + starter, installs to ~/.m2
 ```
 
-Then depend on the locally-installed snapshot:
+Then depend on the locally-installed build:
 
 ```xml
 <dependency>
   <groupId>io.github.batchpilot</groupId>
   <artifactId>batch-pilot-starter</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
+  <version>0.1.0</version>
 </dependency>
 ```
 
