@@ -13,6 +13,7 @@ import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.explore.JobExplorer;
+import org.springframework.batch.core.launch.NoSuchJobException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -97,6 +98,28 @@ class JobQueryServiceTest {
         assertThat(jobs).hasSize(1);
         assertThat(jobs.get(0).lastExecution()).isNull();
         assertThat(jobs.get(0).instanceCount()).isZero();
+    }
+
+    @Test
+    void listJobs_includesRegisteredJobsThatNeverRan() throws Exception {
+        // JobExplorer only knows executed jobs; registry contributes never-run names.
+        org.springframework.batch.core.configuration.ListableJobLocator registry =
+                mock(org.springframework.batch.core.configuration.ListableJobLocator.class);
+        when(registry.getJobNames()).thenReturn(List.of("registeredOnlyJob", "ranJob"));
+        when(jobExplorer.getJobNames()).thenReturn(List.of("ranJob"));
+        when(jobExplorer.getJobInstanceCount("ranJob")).thenReturn(1L);
+        when(jobExplorer.getJobInstanceCount("registeredOnlyJob"))
+                .thenThrow(new NoSuchJobException("never ran"));
+        when(jobExplorer.getLastJobInstance("ranJob")).thenReturn(null);
+        when(jobExplorer.getLastJobInstance("registeredOnlyJob")).thenReturn(null);
+
+        List<JobSummaryDto> jobs = new JobQueryService(jobExplorer, registry).listJobs();
+
+        assertThat(jobs).extracting(JobSummaryDto::name)
+                .containsExactly("ranJob", "registeredOnlyJob");
+        JobSummaryDto neverRan = jobs.get(1);
+        assertThat(neverRan.instanceCount()).isZero();
+        assertThat(neverRan.lastExecution()).isNull();
     }
 
     @Test

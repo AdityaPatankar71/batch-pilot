@@ -9,6 +9,7 @@ import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobInstance;
 import org.springframework.batch.core.JobParameter;
 import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.core.configuration.ListableJobLocator;
 import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.batch.core.launch.NoSuchJobException;
 
@@ -21,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 
 /**
  * Read-only query layer over Spring Batch metadata.
@@ -34,15 +36,31 @@ public class JobQueryService {
     private static final DateTimeFormatter ISO = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
     private final JobExplorer jobExplorer;
+    private final ListableJobLocator jobRegistry;
 
     public JobQueryService(JobExplorer jobExplorer) {
-        this.jobExplorer = jobExplorer;
+        this(jobExplorer, null);
     }
 
-    /** Every registered job name with its instance count and last-execution summary. */
+    /**
+     * @param jobExplorer source of execution history ({@code BATCH_*} metadata)
+     * @param jobRegistry optional registry of registered jobs, so jobs that have
+     *                    never run still appear in the overview (JobExplorer only
+     *                    knows names that have at least one instance)
+     */
+    public JobQueryService(JobExplorer jobExplorer, ListableJobLocator jobRegistry) {
+        this.jobExplorer = jobExplorer;
+        this.jobRegistry = jobRegistry;
+    }
+
+    /** Every known job name (registered or executed) with instance count and last-execution summary. */
     public List<JobSummaryDto> listJobs() {
+        TreeSet<String> names = new TreeSet<>(jobExplorer.getJobNames());
+        if (jobRegistry != null) {
+            names.addAll(jobRegistry.getJobNames());
+        }
         List<JobSummaryDto> jobs = new ArrayList<>();
-        for (String name : jobExplorer.getJobNames()) {
+        for (String name : names) {
             long instanceCount = instanceCount(name);
             ExecutionSummaryDto last = lastExecutionSummary(name);
             jobs.add(new JobSummaryDto(name, instanceCount, last));

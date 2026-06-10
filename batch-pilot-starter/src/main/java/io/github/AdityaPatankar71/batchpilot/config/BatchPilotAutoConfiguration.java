@@ -7,17 +7,25 @@ import io.github.AdityaPatankar71.batchpilot.web.BatchPilotActionController;
 import io.github.AdityaPatankar71.batchpilot.web.BatchPilotController;
 import io.github.AdityaPatankar71.batchpilot.web.BatchPilotExceptionHandler;
 import io.github.AdityaPatankar71.batchpilot.web.BatchPilotWebConfig;
+import org.springframework.batch.core.configuration.JobRegistry;
 import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.batch.core.launch.JobOperator;
+import org.springframework.batch.core.launch.support.JobOperatorFactoryBean;
+import org.springframework.batch.core.launch.support.TaskExecutorJobLauncher;
+import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.sql.DataSource;
 
@@ -41,8 +49,9 @@ public class BatchPilotAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public JobQueryService batchPilotJobQueryService(JobExplorer jobExplorer) {
-        return new JobQueryService(jobExplorer);
+    public JobQueryService batchPilotJobQueryService(JobExplorer jobExplorer,
+                                                     ObjectProvider<JobRegistry> jobRegistry) {
+        return new JobQueryService(jobExplorer, jobRegistry.getIfAvailable());
     }
 
     @Bean
@@ -59,12 +68,41 @@ public class BatchPilotAutoConfiguration {
         return new AuditService(new JdbcTemplate(dataSource));
     }
 
+    /**
+     * batch-pilot's own {@link JobOperator}, backed by an <em>asynchronous</em>
+     * launcher so launch/restart REST calls return immediately with the new
+     * execution id instead of blocking the HTTP thread until the job finishes
+     * (which would also make stop-from-the-console impossible).
+     *
+     * <p>{@code defaultCandidate = false} keeps this bean out of by-type
+     * autowiring, so a host application that injects {@code JobOperator} still
+     * gets its own (Boot's) bean unambiguously.
+     */
+    @Bean(defaultCandidate = false)
+    public JobOperatorFactoryBean batchPilotJobOperator(JobRepository jobRepository,
+                                                        JobRegistry jobRegistry,
+                                                        JobExplorer jobExplorer,
+                                                        PlatformTransactionManager transactionManager) throws Exception {
+        TaskExecutorJobLauncher asyncLauncher = new TaskExecutorJobLauncher();
+        asyncLauncher.setJobRepository(jobRepository);
+        asyncLauncher.setTaskExecutor(new SimpleAsyncTaskExecutor("batch-pilot-"));
+        asyncLauncher.afterPropertiesSet();
+
+        JobOperatorFactoryBean factory = new JobOperatorFactoryBean();
+        factory.setJobRepository(jobRepository);
+        factory.setJobRegistry(jobRegistry);
+        factory.setJobExplorer(jobExplorer);
+        factory.setJobLauncher(asyncLauncher);
+        factory.setTransactionManager(transactionManager);
+        return factory;
+    }
+
     @Bean
     @ConditionalOnMissingBean
-    public JobOperationService batchPilotJobOperationService(JobOperator jobOperator,
-                                                             BatchPilotProperties properties,
-                                                             AuditService auditService) {
-        // Uses the host application's JobOperator (Spring Boot auto-configures one).
+    public JobOperationService batchPilotJobOperationService(
+            @Qualifier("batchPilotJobOperator") JobOperator jobOperator,
+            BatchPilotProperties properties,
+            AuditService auditService) {
         return new JobOperationService(jobOperator, properties, auditService);
     }
 
