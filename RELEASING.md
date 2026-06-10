@@ -21,10 +21,19 @@ otherwise consumers can't resolve the starter.
 
 ### 1. Verify the namespace
 
-The groupId is `io.github.adityapatankar71`. On `central.sonatype.com`, register
-and verify the **`io.github.adityapatankar71`** namespace (GitHub-based
-verification: the portal has you create a public repo named after a generated
-code). Until verified, uploads are rejected.
+The groupId is `io.github.batchpilot`. On `central.sonatype.com`, register and
+verify the **`io.github.batchpilot`** namespace via GitHub. This means the
+GitHub account/organization named **`batchpilot`** must exist and be yours — the
+Portal has you create a public repo under it named after a generated code. So
+before releasing:
+
+1. Create the GitHub organization (or account) **`batchpilot`**.
+2. Use it to verify the `io.github.batchpilot` namespace on the Portal.
+
+The code repo itself can stay anywhere (the `scm`/`url` in the pom currently
+point at `AdityaPatankar71/batch-pilot`); only the *namespace* account must be
+`batchpilot`. If you move the repo under the org, update those pom URLs too.
+Until the namespace is verified, uploads are rejected.
 
 ### 2. Generate a Portal token
 

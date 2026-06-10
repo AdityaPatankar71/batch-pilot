@@ -11,7 +11,7 @@
         <relativePath/>
     </parent>
 
-    <groupId>io.github.adityapatankar71</groupId>
+    <groupId>io.github.batchpilot</groupId>
     <artifactId>batch-pilot-parent</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
@@ -62,12 +62,12 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>io.github.adityapatankar71</groupId>
+                <groupId>io.github.batchpilot</groupId>
                 <artifactId>batch-pilot-starter</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>io.github.adityapatankar71</groupId>
+                <groupId>io.github.batchpilot</groupId>
                 <artifactId>batch-pilot-ui</artifactId>
                 <version>${project.version}</version>
             </dependency>

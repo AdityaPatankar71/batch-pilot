@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>io.github.adityapatankar71</groupId>
+        <groupId>io.github.batchpilot</groupId>
         <artifactId>batch-pilot-parent</artifactId>
         <version>0.1.0-SNAPSHOT</version>
     </parent>
@@ -31,7 +31,7 @@
 
         <!-- Compiled Angular UI served from the classpath at /batch-pilot. -->
         <dependency>
-            <groupId>io.github.adityapatankar71</groupId>
+            <groupId>io.github.batchpilot</groupId>
             <artifactId>batch-pilot-ui</artifactId>
             <scope>runtime</scope>
         </dependency>
