@@ -8,9 +8,12 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatExpansionModule } from '@angular/material/expansion';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../api.service';
-import { ExecutionDetail } from '../models';
+import { ActionsCapabilities, ExecutionDetail } from '../models';
 import { DurationPipe } from '../duration.pipe';
+import { ConfirmDialogComponent } from '../shared/confirm-dialog.component';
 
 @Component({
   selector: 'bp-execution-detail',
@@ -18,6 +21,7 @@ import { DurationPipe } from '../duration.pipe';
   imports: [
     DatePipe, DurationPipe, MatTableModule, MatProgressSpinnerModule, MatIconModule,
     MatCardModule, MatButtonModule, MatChipsModule, MatExpansionModule,
+    MatDialogModule, MatSnackBarModule,
   ],
   template: `
     <button mat-button (click)="back()"><mat-icon>arrow_back</mat-icon> Back</button>
@@ -33,6 +37,19 @@ import { DurationPipe } from '../duration.pipe';
         {{ detail.jobName }} — execution #{{ detail.executionId }}
         <span [class]="'status-' + detail.status">&nbsp;{{ detail.status }}</span>
       </h2>
+
+      <div class="bp-row-gap">
+        @if (canRestart()) {
+          <button mat-raised-button color="primary" [disabled]="busy" (click)="restart()">
+            <mat-icon>replay</mat-icon> Restart
+          </button>
+        }
+        @if (canStop()) {
+          <button mat-raised-button color="warn" [disabled]="busy" (click)="stop()">
+            <mat-icon>stop</mat-icon> Stop
+          </button>
+        }
+      </div>
 
       <mat-card class="bp-row-gap"><mat-card-content>
         <div><strong>Instance:</strong> {{ detail.instanceId }}</div>
@@ -107,15 +124,28 @@ export class ExecutionDetailComponent implements OnInit {
   stepColumns = ['stepName', 'status', 'read', 'write', 'skip', 'commit', 'exit'];
   detail: ExecutionDetail | null = null;
   loading = true;
+  busy = false;
   error: string | null = null;
+  capabilities: ActionsCapabilities = { restart: false, stop: false, launch: false };
 
   constructor(
     private readonly api: ApiService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
+    private readonly dialog: MatDialog,
+    private readonly snackBar: MatSnackBar,
   ) {}
 
   ngOnInit(): void {
+    this.api.getCapabilities().subscribe({
+      next: (caps) => (this.capabilities = caps),
+      error: () => undefined,
+    });
+    this.load();
+  }
+
+  private load(): void {
+    this.loading = true;
     const id = this.route.snapshot.paramMap.get('executionId') ?? '';
     this.api.getExecution(id).subscribe({
       next: (detail) => {
@@ -127,6 +157,73 @@ export class ExecutionDetailComponent implements OnInit {
         this.loading = false;
       },
     });
+  }
+
+  canRestart(): boolean {
+    return this.capabilities.restart && ['FAILED', 'STOPPED'].includes(this.detail?.status ?? '');
+  }
+
+  canStop(): boolean {
+    return this.capabilities.stop && ['STARTED', 'STARTING'].includes(this.detail?.status ?? '');
+  }
+
+  restart(): void {
+    if (!this.detail) {
+      return;
+    }
+    const execId = this.detail.executionId;
+    this.confirm('Restart execution', `Restart execution #${execId}?`, 'Restart', 'primary', () => {
+      this.busy = true;
+      this.api.restart(execId).subscribe({
+        next: (res) => {
+          this.busy = false;
+          this.snackBar.open(`Restarted as execution #${res.newExecutionId}`, 'OK', { duration: 4000 });
+          this.router.navigate(['/executions', res.newExecutionId]).then(() => this.load());
+        },
+        error: (err) => this.fail(err),
+      });
+    });
+  }
+
+  stop(): void {
+    if (!this.detail) {
+      return;
+    }
+    const execId = this.detail.executionId;
+    this.confirm('Stop execution', `Request stop of execution #${execId}?`, 'Stop', 'warn', () => {
+      this.busy = true;
+      this.api.stop(execId).subscribe({
+        next: () => {
+          this.busy = false;
+          this.snackBar.open('Stop requested', 'OK', { duration: 4000 });
+          this.load();
+        },
+        error: (err) => this.fail(err),
+      });
+    });
+  }
+
+  private confirm(
+    title: string,
+    message: string,
+    confirmLabel: string,
+    confirmColor: 'primary' | 'warn',
+    onConfirm: () => void,
+  ): void {
+    this.dialog
+      .open(ConfirmDialogComponent, { data: { title, message, confirmLabel, confirmColor } })
+      .afterClosed()
+      .subscribe((ok) => {
+        if (ok) {
+          onConfirm();
+        }
+      });
+  }
+
+  private fail(err: { error?: { detail?: string }; message?: string }): void {
+    this.busy = false;
+    const detail = err?.error?.detail ?? err?.message ?? 'action failed';
+    this.snackBar.open(detail, 'Dismiss', { duration: 6000 });
   }
 
   /**

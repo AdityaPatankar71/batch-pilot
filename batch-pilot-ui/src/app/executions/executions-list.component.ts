@@ -7,9 +7,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../api.service';
-import { ExecutionSummary } from '../models';
+import { ActionsCapabilities, ExecutionSummary } from '../models';
 import { DurationPipe } from '../duration.pipe';
+import { LaunchDialogComponent } from '../shared/launch-dialog.component';
 
 @Component({
   selector: 'bp-executions-list',
@@ -17,10 +20,18 @@ import { DurationPipe } from '../duration.pipe';
   imports: [
     DatePipe, DurationPipe, MatTableModule, MatProgressSpinnerModule,
     MatIconModule, MatCardModule, MatButtonModule, MatChipsModule,
+    MatDialogModule, MatSnackBarModule,
   ],
   template: `
     <button mat-button (click)="back()"><mat-icon>arrow_back</mat-icon> Jobs</button>
-    <h2>Executions — {{ jobName }}</h2>
+    <h2>
+      Executions — {{ jobName }}
+      @if (capabilities.launch) {
+        <button mat-raised-button color="primary" style="margin-left: 12px;" (click)="launch()">
+          <mat-icon>play_arrow</mat-icon> Launch
+        </button>
+      }
+    </h2>
 
     @if (loading) {
       <mat-spinner diameter="40"></mat-spinner>
@@ -79,15 +90,27 @@ export class ExecutionsListComponent implements OnInit {
   executions: ExecutionSummary[] = [];
   loading = true;
   error: string | null = null;
+  capabilities: ActionsCapabilities = { restart: false, stop: false, launch: false };
 
   constructor(
     private readonly api: ApiService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
+    private readonly dialog: MatDialog,
+    private readonly snackBar: MatSnackBar,
   ) {}
 
   ngOnInit(): void {
     this.jobName = this.route.snapshot.paramMap.get('jobName') ?? '';
+    this.api.getCapabilities().subscribe({
+      next: (caps) => (this.capabilities = caps),
+      error: () => undefined,
+    });
+    this.load();
+  }
+
+  private load(): void {
+    this.loading = true;
     this.api.listExecutions(this.jobName).subscribe({
       next: (executions) => {
         this.executions = executions;
@@ -98,6 +121,27 @@ export class ExecutionsListComponent implements OnInit {
         this.loading = false;
       },
     });
+  }
+
+  launch(): void {
+    this.dialog
+      .open(LaunchDialogComponent, { data: { jobName: this.jobName }, width: '720px' })
+      .afterClosed()
+      .subscribe((params) => {
+        if (!params) {
+          return;
+        }
+        this.api.launch(this.jobName, params).subscribe({
+          next: (res) => {
+            this.snackBar.open(`Launched as execution #${res.executionId}`, 'OK', { duration: 4000 });
+            this.load();
+          },
+          error: (err) => {
+            const detail = err?.error?.detail ?? err?.message ?? 'launch failed';
+            this.snackBar.open(detail, 'Dismiss', { duration: 6000 });
+          },
+        });
+      });
   }
 
   open(e: ExecutionSummary): void {

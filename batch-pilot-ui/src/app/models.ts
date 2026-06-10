@@ -44,6 +44,31 @@ export interface StepExecution {
   failureExceptions: string[];
 }
 
+export interface ActionsCapabilities {
+  restart: boolean;
+  stop: boolean;
+  launch: boolean;
+}
+
+export type ParamType = 'STRING' | 'LONG' | 'DOUBLE' | 'DATE';
+
+export interface LaunchParamInput {
+  name: string;
+  value: string;
+  type: ParamType;
+  identifying: boolean;
+}
+
+export interface AuditEvent {
+  id: string;
+  eventTime: string | null;
+  principal: string | null;
+  action: string;
+  target: string | null;
+  result: string;
+  message: string | null;
+}
+
 export interface ExecutionDetail {
   executionId: number;
   instanceId: number | null;

@@ -16,5 +16,9 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./executions/execution-detail.component').then((m) => m.ExecutionDetailComponent),
   },
+  {
+    path: 'audit',
+    loadComponent: () => import('./audit/audit-list.component').then((m) => m.AuditListComponent),
+  },
   { path: '**', redirectTo: '' },
 ];
