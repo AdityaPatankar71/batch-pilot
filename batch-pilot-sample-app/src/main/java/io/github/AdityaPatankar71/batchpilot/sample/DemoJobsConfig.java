@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
@@ -20,12 +21,18 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 /**
- * Three demo jobs so the console has real data on first start:
+ * Demo jobs so the console has real data on first start:
  * <ul>
  *   <li>{@code successJob} – a single chunk step that completes.</li>
  *   <li>{@code multiStepJob} – extract (chunk), transform (tasklet), load (chunk).</li>
  *   <li>{@code failingJob} – a chunk step that throws, producing a stack trace.</li>
+ *   <li>{@code slowJob} – ~30s run (1 item/second), for watching STARTED status
+ *       and exercising stop; never launched automatically.</li>
  * </ul>
+ *
+ * <p>All readers are {@link StepScope step-scoped} so every execution gets a fresh
+ * reader. {@link ListItemReader} is stateful; as a singleton it would be exhausted
+ * after the first run and every relaunch/restart would silently read zero items.
  */
 @Configuration
 public class DemoJobsConfig {
@@ -50,11 +57,17 @@ public class DemoJobsConfig {
     }
 
     @Bean
-    public Step loadCustomersStep(JobRepository jobRepository, PlatformTransactionManager tx) {
-        ItemReader<Integer> reader = new ListItemReader<>(range(10));
+    @StepScope
+    public ItemReader<Integer> customersReader() {
+        return new ListItemReader<>(range(10));
+    }
+
+    @Bean
+    public Step loadCustomersStep(JobRepository jobRepository, PlatformTransactionManager tx,
+                                  ItemReader<Integer> customersReader) {
         return new StepBuilder("loadCustomers", jobRepository)
                 .<Integer, Integer>chunk(5, tx)
-                .reader(reader)
+                .reader(customersReader)
                 .writer(loggingWriter("loadCustomers"))
                 .build();
     }
@@ -71,10 +84,17 @@ public class DemoJobsConfig {
     }
 
     @Bean
-    public Step extractStep(JobRepository jobRepository, PlatformTransactionManager tx) {
+    @StepScope
+    public ItemReader<Integer> extractReader() {
+        return new ListItemReader<>(range(5));
+    }
+
+    @Bean
+    public Step extractStep(JobRepository jobRepository, PlatformTransactionManager tx,
+                            ItemReader<Integer> extractReader) {
         return new StepBuilder("extract", jobRepository)
                 .<Integer, Integer>chunk(2, tx)
-                .reader(new ListItemReader<>(range(5)))
+                .reader(extractReader)
                 .writer(loggingWriter("extract"))
                 .build();
     }
@@ -91,10 +111,17 @@ public class DemoJobsConfig {
     }
 
     @Bean
-    public Step loadStep(JobRepository jobRepository, PlatformTransactionManager tx) {
+    @StepScope
+    public ItemReader<Integer> loadReader() {
+        return new ListItemReader<>(range(3));
+    }
+
+    @Bean
+    public Step loadStep(JobRepository jobRepository, PlatformTransactionManager tx,
+                         ItemReader<Integer> loadReader) {
         return new StepBuilder("load", jobRepository)
                 .<Integer, Integer>chunk(3, tx)
-                .reader(new ListItemReader<>(range(3)))
+                .reader(loadReader)
                 .writer(loggingWriter("load"))
                 .build();
     }
@@ -109,8 +136,14 @@ public class DemoJobsConfig {
     }
 
     @Bean
-    public Step riskyStep(JobRepository jobRepository, PlatformTransactionManager tx) {
-        ItemReader<Integer> reader = new ListItemReader<>(range(5));
+    @StepScope
+    public ItemReader<Integer> riskyReader() {
+        return new ListItemReader<>(range(5));
+    }
+
+    @Bean
+    public Step riskyStep(JobRepository jobRepository, PlatformTransactionManager tx,
+                          ItemReader<Integer> riskyReader) {
         ItemWriter<Integer> explodingWriter = chunk -> {
             if (chunk.getItems().contains(3)) {
                 throw new IllegalStateException("Downstream system rejected record id=3");
@@ -119,8 +152,39 @@ public class DemoJobsConfig {
         };
         return new StepBuilder("risky", jobRepository)
                 .<Integer, Integer>chunk(2, tx)
-                .reader(reader)
+                .reader(riskyReader)
                 .writer(explodingWriter)
+                .build();
+    }
+
+    // --- slowJob ----------------------------------------------------------
+
+    @Bean
+    public Job slowJob(JobRepository jobRepository, Step crawlStep) {
+        return new JobBuilder("slowJob", jobRepository)
+                .start(crawlStep)
+                .build();
+    }
+
+    @Bean
+    @StepScope
+    public ItemReader<Integer> crawlReader() {
+        return new ListItemReader<>(range(30));
+    }
+
+    @Bean
+    public Step crawlStep(JobRepository jobRepository, PlatformTransactionManager tx,
+                          ItemReader<Integer> crawlReader) {
+        // One item per chunk, one second per item: stop requests are honoured at
+        // chunk boundaries, so this step stops within ~a second of the request.
+        ItemWriter<Integer> slowWriter = chunk -> {
+            Thread.sleep(1000);
+            log.info("[crawl] processed item {}", chunk.getItems());
+        };
+        return new StepBuilder("crawl", jobRepository)
+                .<Integer, Integer>chunk(1, tx)
+                .reader(crawlReader)
+                .writer(slowWriter)
                 .build();
     }
 }
